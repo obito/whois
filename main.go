@@ -18,7 +18,7 @@ func main() {
 		ext := extension(domain)
 
 		log.Print(fmt.Sprintf("# whois.nic.%s", ext))
-		result, err := query(fmt.Sprintf("whois.nic.%s", ext), domain)
+		result, err := query("whois.iana.org", domain)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -27,14 +27,22 @@ func main() {
 
 		whoisServer := server(result)
 
-		log.Print("# " + whoisServer)
+		for whoisServer != "" {
+			log.Print("# " + whoisServer)
 
-		result, err = query(whoisServer, domain)
-		if err != nil {
-			return
+			result, err = query(whoisServer, domain)
+			if err != nil {
+				return
+			}
+
+			log.Print(result)
+
+			tempServer := server(result)
+			if tempServer == whoisServer {
+				break
+			}
+			whoisServer = tempServer
 		}
-
-		log.Print(result)
 	}
 }
 
@@ -64,7 +72,19 @@ func query(server, domain string) (string, error) {
 func server(result string) string {
 	var reg = regexp.MustCompile(`Registrar WHOIS Server: (.*)`)
 
-	return strings.SplitN(reg.FindString(result), ": ", 2)[1]
+	server := strings.SplitN(reg.FindString(result), ": ", 2)
+
+	if len(server) < 2 {
+		var reg = regexp.MustCompile(`whois: (.*)`)
+		log.Print("skrt")
+		server = strings.SplitN(reg.FindString(result), ": ", 2)
+	}
+
+	if len(server) < 2 {
+		return ""
+	}
+
+	return strings.TrimSpace(server[1])
 }
 
 func extension(domain string) string {
