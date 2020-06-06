@@ -76,7 +76,6 @@ func server(result string) string {
 
 	if len(server) < 2 {
 		var reg = regexp.MustCompile(`whois: (.*)`)
-		log.Print("skrt")
 		server = strings.SplitN(reg.FindString(result), ": ", 2)
 	}
 
